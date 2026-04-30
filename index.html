@@ -378,6 +378,21 @@
       <div class="mvalue" id="mMin">—</div>
       <div class="munit">€/MWh</div>
     </div>
+    <div class="mcard">
+      <div class="mlabel">Verbrauch aktuell</div>
+      <div class="mvalue" id="mLoad">—</div>
+      <div class="munit">MW</div>
+    </div>
+    <div class="mcard" id="mOverCard">
+      <div class="mlabel">Überproduktion</div>
+      <div class="mvalue" id="mOver">—</div>
+      <div class="munit" id="mOverUnit">MW (Prod. − Verbr.)</div>
+    </div>
+    <div class="mcard">
+      <div class="mlabel">Einspeisung / Export</div>
+      <div class="mvalue" id="mExport">—</div>
+      <div class="munit">% der Produktion</div>
+    </div>
   </div>
 
   <!-- Charts -->
@@ -587,6 +602,37 @@ async function loadProduction(cc, dateStr) {
   document.getElementById('mPV').textContent = fmt(pv);
   const share = total > 0 ? pv / total * 100 : 0;
   document.getElementById('mShare').textContent = fmt(share, 1);
+
+  // Verbrauch & Überproduktion aus Load-Daten
+  if (currentLoadData) {
+    const curLoad = Math.abs(latestNonNull(currentLoadData.values));
+    document.getElementById('mLoad').textContent = fmt(curLoad);
+    const overProd = total - curLoad;
+    const overEl   = document.getElementById('mOver');
+    const overCard = document.getElementById('mOverCard');
+    overEl.textContent = fmt(Math.abs(overProd));
+    if (overProd > 0) {
+      overEl.style.color      = 'var(--green)';
+      overCard.style.borderLeft = '3px solid var(--green)';
+      document.getElementById('mOverUnit').textContent = 'MW Überschuss ↑';
+    } else if (overProd < 0) {
+      overEl.style.color      = 'var(--red)';
+      overCard.style.borderLeft = '3px solid var(--red)';
+      document.getElementById('mOverUnit').textContent = 'MW Unterdeckung ↓';
+    } else {
+      overEl.style.color      = 'var(--text)';
+      overCard.style.borderLeft = '';
+      document.getElementById('mOverUnit').textContent = 'MW (Prod. − Verbr.)';
+    }
+    const exportPct = total > 0 ? (overProd / total * 100) : 0;
+    const expEl = document.getElementById('mExport');
+    expEl.textContent = (exportPct >= 0 ? '+' : '') + fmt(exportPct, 1);
+    expEl.style.color = exportPct > 0 ? 'var(--green)' : exportPct < 0 ? 'var(--red)' : 'var(--text)';
+  } else {
+    document.getElementById('mLoad').textContent = '—';
+    document.getElementById('mOver').textContent = '—';
+    document.getElementById('mExport').textContent = '—';
+  }
 
   // Produktions-Balkendiagramm
   const wrap = document.getElementById('prodWrap');
