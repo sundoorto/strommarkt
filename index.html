@@ -790,11 +790,14 @@ async function loadAll() {
   dp.min      = new Date(Date.now() - 30 * 86400_000).toISOString().slice(0, 10);
   dp.addEventListener('change', loadAll);
   document.getElementById('countrySelect').addEventListener('change', () => {
-    // Nur Produktionsdaten neu laden
     const dateStr = dp.value;
     const picker  = document.getElementById('countrySelect');
     const cc      = picker.value;
-    loadProduction(cc, dateStr).catch(console.error);
+    const bzn     = picker.options[picker.selectedIndex].dataset.bzn;
+    Promise.all([
+      loadProduction(cc, dateStr),
+      loadPrices(bzn, dateStr)
+    ]).catch(console.error);
   });
   loadAll();
 })();
